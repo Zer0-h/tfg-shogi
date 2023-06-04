@@ -58,11 +58,11 @@ Aquest fitxer conté la implementació de l'arquitectura de la xarxa neuronal pe
 
 - **NeuralNet**: La classe NeuralNet defineix l'arquitectura de la xarxa neuronal i proporciona mètodes per entrenar-la, fer prediccions i guardar i carregar els pesos del model.
 
-## Fitxer: play_tictactoe.py
+## Fitxer: pit.py
 
 Aquest fitxer conté un script per jugar a tres en ratlla contra la xarxa neuronal entrenada.
 
-- **play_tictactoe**: Aquest script permet als jugadors humans enfrontar-se a la xarxa neuronal entrenada i jugar partides de tres en ratlla.
+- **pit**: Aquest script permet als jugadors humans enfrontar-se a la xarxa neuronal entrenada i jugar partides de tres en ratlla.
 
 ## Fitxer: utils.py
 
