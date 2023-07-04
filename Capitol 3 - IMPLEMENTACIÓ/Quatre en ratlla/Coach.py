@@ -10,7 +10,6 @@ from tqdm import tqdm
 
 from Arena import Arena
 from MCTS import MCTS
-import csv
 
 log = logging.getLogger(__name__)
 
@@ -29,9 +28,6 @@ class Coach():
         self.mcts = MCTS(self.game, self.nnet, self.args)
         self.trainExamplesHistory = []  # history of examples from args.numItersForTrainExamplesHistory latest iterations
         self.skipFirstSelfPlay = False  # can be overriden in loadTrainExamples()
-        self.fileNPD = open('C:/Users/Zer0/PycharmProjects/conecta4train/new_prev_draws_process.cvs', 'a+')
-        self.writerNPD = csv.writer(self.fileNPD)
-        self.writerNPD.writerow(['iteration #', 'new model wins', 'previous model wins', 'draws', 'accept new model'])
 
     def executeEpisode(self):
         """
@@ -124,16 +120,13 @@ class Coach():
 
             log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
             if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
-                self.writerNPD.writerow([i, nwins, pwins, draws, 0])
                 log.info('REJECTING NEW MODEL')
                 self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
             else:
-                self.writerNPD.writerow([i, nwins, pwins, draws, 1])
                 log.info('ACCEPTING NEW MODEL')
                 self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))
                 self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
-            self.fileNPD.flush()
-        self.fileNPD.close()
+
     def getCheckpointFile(self, iteration):
         return 'checkpoint_' + str(iteration) + '.pth.tar'
 

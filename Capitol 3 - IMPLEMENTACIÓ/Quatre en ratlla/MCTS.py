@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class MCTS():
     """
-    This class handles the Monte Carlo Tree Search (MCTS).
+    This class handles the MCTS tree.
     """
 
     def __init__(self, game, nnet, args):

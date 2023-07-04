@@ -1,56 +1,103 @@
 import math
 import numpy as np
 
-class MultiArmedBandit:
-    def __init__(self, true_action_values, epsilon, total_steps, confidence, is_ucb):
-        self.arm_number = np.size(true_action_values)
-        self.epsilon = epsilon
-        self.confidence = confidence
-        self.is_ucb = is_ucb
-        self.current_step = 0
-        self.times_selected_arm = np.zeros(self.arm_number)
-        self.total_steps = total_steps
-        self.true_action_values = true_action_values
-        self.mean_rewards = np.zeros(total_steps + 1)
-        self.ucb_values = np.zeros(self.arm_number)
-        self.sum_rewards = np.zeros(self.arm_number)
 
-    def select_action(self):
-        if not self.is_ucb:
-            probability_draw = np.random.rand()
-            if (self.current_step == 0) or (probability_draw <= self.epsilon):
-                selected_arm_index = np.random.choice(self.arm_number)
+class BanditProblem(object):
+    def __init__(self, trueActionValues, epsilon, totalSteps, confidence, isUCB):
+
+        # Number of arms
+        self.armNumber = np.size(trueActionValues)
+
+        # Probability of ignoring the greedy selection and selecting an arm randomly
+        self.epsilon = epsilon
+
+        self.confidence = confidence
+
+        self.isUCB = isUCB
+
+        # Current step
+        self.currentStep = 0
+
+        # This variable tracks how many times a particular arm is being selected
+        self.timesSelected = np.zeros(self.armNumber)
+
+        # Total steps
+        self.totalSteps = totalSteps
+
+        # True action values that are expectations of rewards for arms
+        self.trueActionValues = trueActionValues
+
+        # Vector that stores mean rewards of every arm
+        self.armMeanRewards = np.zeros(self.armNumber)
+
+        # Variable that stores the current value of reward
+        self.currentReward = 0
+
+        # Mean reward
+        self.meanReward = np.zeros(totalSteps + 1)
+
+        self.ucb_values = np.zeros(self.armNumber)
+
+        self.sum_rewards = np.zeros(self.armNumber)
+
+    def selectAction(self):
+        if not self.isUCB:
+            probabilityDraw = np.random.rand()
+
+            if (self.currentStep == 0) or (probabilityDraw <= self.epsilon):
+                selectedArmIndex = np.random.choice(self.armNumber)
             else:
-                selected_arm_index = np.argmax(self.mean_rewards)
+                selectedArmIndex = np.argmax(self.armMeanRewards)
+
+            self.currentStep += 1
+
+            self.timesSelected[selectedArmIndex] += 1
+
+            self.currentReward = np.random.normal(self.trueActionValues[selectedArmIndex], 2)
+
+            self.meanReward[self.currentStep] = self.meanReward[self.currentStep - 1] + \
+                (1 / self.currentStep) * (self.currentReward - self.meanReward[self.currentStep - 1])
+
+            self.armMeanRewards[selectedArmIndex] += \
+                (1 / self.timesSelected[selectedArmIndex]) * \
+                (self.currentReward - self.armMeanRewards[selectedArmIndex])
 
         else:
-            selected_arm_index = self.selected_ucb_arm()
+            selectedArmIndex = self.selectedUCBArm()
 
-        self.current_step += 1
-        self.times_selected_arm[selected_arm_index] += 1
-        self.current_reward = np.random.normal(self.true_action_values[selected_arm_index], 2)
-        self.mean_rewards[self.current_step] = self.mean_rewards[self.current_step - 1] + (1 / self.current_step) * (self.current_reward - self.mean_rewards[self.current_step - 1])
-        self.armMeanRewards[selected_arm_index] += (1 / self.times_selected_arm[selected_arm_index]) * (self.current_reward - self.armMeanRewards[selected_arm_index])
-        self.sum_rewards[selected_arm_index] += self.current_reward
+            self.currentStep += 1
 
-    def play_game(self):
-        for _ in range(self.total_steps):
-            self.select_action()
+            self.timesSelected[selectedArmIndex] += 1
 
-    def clear_all(self):
-        self.current_step = 0
-        self.times_selected_arm = np.zeros(self.arm_number)
-        self.armMeanRewards = np.zeros(self.arm_number)
-        self.current_reward = 0
-        self.mean_rewards = np.zeros(self.total_steps + 1)
+            self.currentReward = np.random.normal(self.trueActionValues[selectedArmIndex], 2)
 
-    def selected_ucb_arm(self):
-        for arm in range(self.arm_number):
-            if self.times_selected_arm[arm] == 0:
+            self.meanReward[self.currentStep] = self.meanReward[self.currentStep - 1] + \
+                (1 / self.currentStep) * (self.currentReward - self.meanReward[self.currentStep - 1])
+
+            self.armMeanRewards[selectedArmIndex] += \
+                (1 / self.timesSelected[selectedArmIndex]) * \
+                (self.currentReward - self.armMeanRewards[selectedArmIndex])
+
+            self.sum_rewards[selectedArmIndex] += self.currentReward
+
+    def playGame(self):
+        for _ in range(self.totalSteps):
+            self.selectAction()
+
+    def clearAll(self):
+        self.currentStep = 0
+        self.timesSelected = np.zeros(self.armNumber)
+        self.armMeanRewards = np.zeros(self.armNumber)
+        self.currentReward = 0
+        self.meanReward = np.zeros(self.totalSteps + 1)
+
+    def selectedUCBArm(self):
+        for arm in range(self.armNumber):
+            if self.timesSelected[arm] == 0:
                 return arm
             else:
-                mean_reward = self.sum_rewards[arm] / self.times_selected_arm[arm]
-                confidence_bound = self.confidence * math.sqrt(math.log2(self.current_step) / self.times_selected_arm[arm])
+                mean_reward = self.sum_rewards[arm] / self.timesSelected[arm]
+                confidence_bound = self.confidence * math.sqrt(math.log2(self.currentStep) / self.timesSelected[arm])
                 self.ucb_values[arm] = mean_reward + confidence_bound
 
         return np.argmax(self.ucb_values)

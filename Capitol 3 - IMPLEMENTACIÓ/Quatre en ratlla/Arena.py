@@ -1,5 +1,4 @@
 import logging
-import csv
 
 from tqdm import tqdm
 
@@ -16,17 +15,17 @@ class Arena():
         Input:
             player 1,2: two functions that takes board as input, return action
             game: Game object
-            display: a function that takes board as input  and prints it. Is necessary for verbose
+            display: a function that takes board as input and prints it (e.g.
+                     display in othello/OthelloGame). Is necessary for verbose
                      mode.
 
-        See pit.py for pitting
+        see othello/OthelloPlayers.py for an example. See pit.py for pitting
         human players/other baselines with each other.
         """
         self.player1 = player1
         self.player2 = player2
         self.game = game
         self.display = display
-        self.filePGT = csv.writer(open('C:/Users/Zer0/PycharmProjects/conecta4train/playGames_testing.cvs', 'a+'))
 
     def playGame(self, verbose=False):
         """
@@ -98,5 +97,4 @@ class Arena():
             else:
                 draws += 1
 
-        self.filePGT.writerow([oneWon, twoWon, draws])
         return oneWon, twoWon, draws
