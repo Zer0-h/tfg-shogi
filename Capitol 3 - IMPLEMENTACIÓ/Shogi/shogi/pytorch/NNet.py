@@ -1,26 +1,25 @@
 import os
 import sys
-import time
 
 import numpy as np
-from tqdm import tqdm
 
-sys.path.append('../../')
+sys.path.append('../..')
 from utils import *
 from NeuralNet import NeuralNet
 
 import torch
 import torch.optim as optim
 
+from tqdm import tqdm
 from .ShogiNNet import OthelloNNet as onnet
 
 args = dotdict({
-    'lr': 0.001,
+    'lr': 0.002,
     'dropout': 0.3,
     'epochs': 10,
     'batch_size': 64,
     'cuda': torch.cuda.is_available(),
-    'num_channels': 512,
+    'num_channels': 128,
 })
 
 
@@ -44,7 +43,6 @@ class NNetWrapper(NeuralNet):
             self.nnet.train()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
-
             batch_count = int(len(examples) / args.batch_size)
 
             t = tqdm(range(batch_count), desc='Training Net')
@@ -77,15 +75,13 @@ class NNetWrapper(NeuralNet):
 
     def predict(self, board):
         """
-        board: np array with board
+        board: Shogi.Board()
         """
-        # timing
-        start = time.time()
 
         # preparing input
         board = torch.FloatTensor(board.astype(np.float64))
         if args.cuda: board = board.contiguous().cuda()
-        board = board.view(1, self.board_x, self.board_y)
+        board = board.view(1, self.board_x, self.board_y, self.board_z)
         self.nnet.eval()
         with torch.no_grad():
             pi, v = self.nnet(board)

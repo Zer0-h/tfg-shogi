@@ -8,6 +8,7 @@ class Game():
 
     See shogi/ShogiGame.py for an example implementation.
     """
+
     def __init__(self):
         pass
 
@@ -111,3 +112,13 @@ class Game():
                          Required by MCTS for hashing.
         """
         pass
+
+    def toArray(self, board):
+        """
+        Input:
+            board: current board
+
+        Returns:
+            a board representation suitable as the input to your neural network
+        """
+        return board

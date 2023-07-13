@@ -39,9 +39,11 @@ tensorflow-io-gcs-filesystem==0.26.0
 termcolor==1.1.0
 torch==1.11.0
 tqdm==4.64.0
+typing==3.7.4.3
 typing_extensions==4.2.0
 urllib3==1.26.9
 Werkzeug==2.1.2
 wrapt==1.14.1
 zipp==3.8.0
 python-shogi==1.1.0
+pyffish==0.0.78

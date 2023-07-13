@@ -3,9 +3,9 @@ import logging
 import coloredlogs
 
 from Coach import Coach
-from connect4.Connect4Game import Connect4Game as Game
+from connect4.Connect4Game import Connect4Game
 from connect4.keras.NNet import NNetWrapper as nn
-from utils import *
+from utils import dotdict
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +30,8 @@ args = dotdict({
 
 
 def main():
-    log.info('Loading %s...', Game.__name__)
-    g = Game(6)
+    log.info('Loading %s...', Connect4Game.__name__)
+    g = Connect4Game()
 
     log.info('Loading %s...', nn.__name__)
     nnet = nn(g)

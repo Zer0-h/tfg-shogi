@@ -1,141 +1,157 @@
 from __future__ import print_function
+
 import sys
+
 sys.path.append('..')
 from Game import Game
-from ShogiLogic import Board
 import numpy as np
 import shogi
+import typing
 
-SHOGI_BOARD_SQUARES = 81
+SHOGI_BOARD_SQUARES = len(shogi.SQUARES)
+TOTAL_PIECES = len(shogi.PIECE_TYPES_WITHOUT_KING) + 1
 
-def who(turn):
-  return 1 if turn else -1
+
+def piece_map(board):
+    result = {}
+    for square in range(81 - 1, -1, -1):
+        piece = board.piece_at(square)
+        if piece is not None:
+            result[square] = typing.cast(shogi.Piece, piece)
+    return result
+
+
+def to_np(board):
+    a = [0] * (SHOGI_BOARD_SQUARES * TOTAL_PIECES)
+    for sq, pc in piece_map(board).items():
+        if pc is not None:
+            a[sq * TOTAL_PIECES + pc.piece_type - 1] = 1 if pc.color == shogi.WHITE else -1
+    return np.array(a)
+
+
+def from_move(move):
+    return move.from_square * SHOGI_BOARD_SQUARES + move.to_square
+
 
 def to_move(action):
-  to_sq = action % SHOGI_BOARD_SQUARES
-  from_sq = int(action / SHOGI_BOARD_SQUARES)
-  return shogi.Move(from_sq, to_sq)
+    to_sq = action % SHOGI_BOARD_SQUARES
+    from_sq = int(action / SHOGI_BOARD_SQUARES)
+    return shogi.Move(from_sq, to_sq)
+
+
+def who(turn):
+    return 1 if turn == shogi.WHITE else -1
+
+
+def square_mirror(square):
+    return SHOGI_BOARD_SQUARES - square - 1
+
 
 def mirror_move(move):
-  return shogi.Move(shogi.square_mirror(move.from_square), shogi.square(move.to_square))
+    return shogi.Move(square_mirror(move.from_square), square_mirror(move.to_square))
+
+
+def change_piece_color(color):
+    return 0 if color == 1 else 1
+
+
+def mirror_board(board):
+    new_board = shogi.Board()
+    new_board.reset()
+
+    # Mirror pieces in board
+    for i in range(SHOGI_BOARD_SQUARES):
+        piece = board.piece_at(i)
+        new_board_square = SHOGI_BOARD_SQUARES - i - 1
+        if piece is None:
+            new_board.remove_piece_at(new_board_square)
+        else:
+            piece.color = change_piece_color(piece.color)
+            new_board.set_piece_at(new_board_square, piece)
+
+    # Mirror pieces in hand
+    for piece_type in range(shogi.PROM_PAWN):
+        if piece_type < shogi.PROM_PAWN:
+            if board.has_piece_in_hand(piece_type, shogi.BLACK):
+                piece_count = board.pieces_in_hand[shogi.BLACK][piece_type]
+                new_board.add_piece_into_hand(piece_type, shogi.WHITE, piece_count)
+            if board.has_piece_in_hand(piece_type, shogi.WHITE):
+                piece_count = board.pieces_in_hand[shogi.WHITE][piece_type]
+                new_board.add_piece_into_hand(piece_type, shogi.BLACK, piece_count)
+
+    return new_board
+
 
 class ShogiGame(Game):
-    square_content = {
-        -1: "X",
-        +0: "-",
-        +1: "O"
-    }
-
-    @staticmethod
-    def getSquarePiece(piece):
-        return ShogiGame.square_content[piece]
-
     def __init__(self, n=9):
         self.n = n
 
     def getInitBoard(self):
-        # return initial board (numpy board)
+        # return initial board
         return shogi.Board()
-        #b = Board(self.n)
-        #return np.array(b.pieces)
+        # return np.array(b.pieces)
 
     def getBoardSize(self):
-        # (a,b) tuple
-        return (self.n, self.n)
+        # (n, n, pieces) tuple
+        return self.n, self.n, TOTAL_PIECES
 
     def getActionSize(self):
-        # return number of actions
+        # We assume every piece can be moved
+        # return len(board.legal_moves) ?
         return SHOGI_BOARD_SQUARES * SHOGI_BOARD_SQUARES
         # return self.n*self.n + 1
 
     def getNextState(self, board, player, action):
         # if player takes action on board, return next (board,player)
         # action must be a valid move
-        assert(who(board.turn) == player)
+        assert (who(board.turn) == player)
         move = to_move(action)
-        if not board.turn:
+        if board.turn == shogi.BLACK:
             # Assume that the move comes from the canonical board
             move = mirror_move(move)
-        if move not in board.legal_moves:
+        if move not in board:
             # It can be a piece promotion, which would have an extra letter (+) in USI format
-            move = shogi.Move.from_usi(move.usi()+'+')
+            move = shogi.Move.from_usi(move.usi() + '+')
             if move not in board.legal_moves:
                 assert False, "%s not in %s" % (str(move), str(list(board.legal_moves)))
         board = board.copy()
         board.push(move)
-        return (board, who(board.turn))
+        return board, who(board.turn)
 
     def getValidMoves(self, board, player):
         # return a fixed size binary vector
-        valids = [0]*self.getActionSize()
-        b = Board(self.n)
-        b.pieces = np.copy(board)
-        legalMoves =  b.get_legal_moves(player)
-        if len(legalMoves)==0:
-            valids[-1]=1
-            return np.array(valids)
-        for x, y in legalMoves:
-            valids[self.n*x+y]=1
-        return np.array(valids)
+        assert (who(board.turn) == player)
+        acts = [0] * self.getActionSize()
+        for move in board.get_legal_moves():
+            acts[from_move(move)] = 1
+        return np.array(acts)
 
     def getGameEnded(self, board, player):
         # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
-        # player = 1
-        b = Board(self.n)
-        b.pieces = np.copy(board)
-        if b.has_legal_moves(player):
-            return 0
-        if b.has_legal_moves(-player):
-            return 0
-        if b.countDiff(player) > 0:
-            return 1
-        return -1
+        if not board.is_game_over():
+            if board.is_stalemate() or board.is_fourfold_repetition():
+                # draw, return very little value
+                return 1e-4
+            else:
+                # The current turn will be the one of the losing player
+                return -1 if who(board.turn) == player else 1
+        return 0
 
     def getCanonicalForm(self, board, player):
         # return state if player==1, else return -state if player==-1
-        return player*board
+        assert (who(board.turn) == player)
+        if board.turn == shogi.WHITE:
+            return board
+        else:
+            return mirror_board(board)
 
     def getSymmetries(self, board, pi):
         # mirror, rotational
-        assert(len(pi) == self.n**2+1)  # 1 for pass
-        pi_board = np.reshape(pi[:-1], (self.n, self.n))
-        l = []
-
-        for i in range(1, 5):
-            for j in [True, False]:
-                newB = np.rot90(board, i)
-                newPi = np.rot90(pi_board, i)
-                if j:
-                    newB = np.fliplr(newB)
-                    newPi = np.fliplr(newPi)
-                l += [(newB, list(newPi.ravel()) + [pi[-1]])]
-        return l
+        return [(board, pi)]
 
     def stringRepresentation(self, board):
-        return board.tostring()
-
-    def stringRepresentationReadable(self, board):
-        board_s = "".join(self.square_content[square] for row in board for square in row)
-        return board_s
-
-    def getScore(self, board, player):
-        b = Board(self.n)
-        b.pieces = np.copy(board)
-        return b.countDiff(player)
+        return board.sfen()
 
     @staticmethod
     def display(board):
-        n = board.shape[0]
-        print("   ", end="")
-        for y in range(n):
-            print(y, end=" ")
-        print("")
-        print("-----------------------")
-        for y in range(n):
-            print(y, "|", end="")    # print the row #
-            for x in range(n):
-                piece = board[y][x]    # get the piece to print
-                print(OthelloGame.square_content[piece], end=" ")
-            print("|")
-
-        print("-----------------------")
+        print(board)
