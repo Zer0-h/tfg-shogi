@@ -1,6 +1,6 @@
 """"
 
-    This is a Regression Test Suite to automatically test all shogi and its ML framework. Each test
+    This is a Regression Test Suite to automatically test all shogi_model and its ML framework. Each test
     plays two quick games using an untrained neural network (randomly initialized) against a random player.
 
 """
@@ -11,9 +11,9 @@ import numpy as np
 
 import Arena
 from MCTS import MCTS
-from shogi.ShogiGame import ShogiGame
-from shogi.ShogiPlayers import RandomPlayer
-from shogi.pytorch.NNet import NNetWrapper as ShogiPytorchNNet
+from shogi_model.ShogiGame import ShogiGame
+from shogi_model.ShogiPlayers import RandomPlayer
+from shogi_model.pytorch.NNet import NNetWrapper as ShogiPytorchNNet
 from utils import *
 
 

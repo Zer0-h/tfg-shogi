@@ -11,7 +11,7 @@ import torch
 import torch.optim as optim
 
 from tqdm import tqdm
-from .ShogiNNet import OthelloNNet as onnet
+from .ShogiNNet import ShogiNNet as onnet
 
 args = dotdict({
     'lr': 0.002,
@@ -26,7 +26,7 @@ args = dotdict({
 class NNetWrapper(NeuralNet):
     def __init__(self, game):
         self.nnet = onnet(game, args)
-        self.board_x, self.board_y = game.getBoardSize()
+        self.board_x, self.board_y, self.board_z = game.getBoardSize()
         self.action_size = game.getActionSize()
 
         if args.cuda:

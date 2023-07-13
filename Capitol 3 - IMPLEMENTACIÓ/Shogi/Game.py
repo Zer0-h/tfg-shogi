@@ -6,7 +6,7 @@ class Game():
 
     Use 1 for player1 and -1 for player2.
 
-    See shogi/ShogiGame.py for an example implementation.
+    See shogi_model/ShogiGame.py for an example implementation.
     """
 
     def __init__(self):

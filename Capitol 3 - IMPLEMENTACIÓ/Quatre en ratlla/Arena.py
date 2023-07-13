@@ -16,10 +16,10 @@ class Arena():
             player 1,2: two functions that takes board as input, return action
             game: Game object
             display: a function that takes board as input and prints it (e.g.
-                     display in shogi/OthelloGame). Is necessary for verbose
+                     display in shogi_model/ShogiGame). Is necessary for verbose
                      mode.
 
-        see shogi/ShogiPlayers.py for an example. See pit.py for pitting
+        see shogi_model/ShogiPlayers.py for an example. See pit.py for pitting
         human players/other baselines with each other.
         """
         self.player1 = player1

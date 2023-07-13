@@ -3,8 +3,8 @@ import logging
 import coloredlogs
 
 from Coach import Coach
-from shogi.ShogiGame import ShogiGame as Game
-from shogi.pytorch.NNet import NNetWrapper as nn
+from shogi_model.ShogiGame import ShogiGame as Game
+from shogi_model.pytorch.NNet import NNetWrapper as nn
 from utils import *
 
 log = logging.getLogger(__name__)
