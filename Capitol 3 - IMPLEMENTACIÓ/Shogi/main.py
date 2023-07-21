@@ -6,7 +6,8 @@ from Coach import Coach
 from shogi_model.ShogiGame import ShogiGame as Game
 from shogi_model.pytorch.NNet import NNetWrapper as nn
 from utils import *
-
+import sys
+import threading
 log = logging.getLogger(__name__)
 
 coloredlogs.install(level='INFO')  # Change this to DEBUG to see more info.
@@ -51,4 +52,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.setrecursionlimit(1000000)
+    threading.stack_size(200000000)
+    thread = threading.Thread(target=main())
+    thread.start()

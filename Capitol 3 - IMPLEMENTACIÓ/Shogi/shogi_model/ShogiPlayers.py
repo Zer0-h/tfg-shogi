@@ -33,7 +33,7 @@ class HumanShogiPlayer():
 
     def play(self, board):
         mboard = board
-        if board.turn == shogi.WHITE:
+        if board.turn == shogi.BLACK:
             mboard = mirror_board(board)
         print('Valid Moves', end=':')
         for move in mboard.legal_moves:
@@ -44,7 +44,7 @@ class HumanShogiPlayer():
         if move is None:
             print('Please try again, e.g., %s' % random.choice(list(mboard.legal_moves)).uci())
             self.play(board)
-        if board.turn == shogi.WHITE:
+        if board.turn == shogi.BLACK:
             move = mirror_move(move)
         return from_move(move)
 

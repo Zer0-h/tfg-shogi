@@ -7,6 +7,9 @@ from Game import Game
 import numpy as np
 import shogi
 import typing
+import copy
+
+sys.setrecursionlimit(10000) # for deepcopy
 
 SHOGI_BOARD_SQUARES = len(shogi.SQUARES)
 TOTAL_PIECES = len(shogi.PIECE_TYPES_WITHOUT_KING) + 1
@@ -40,7 +43,7 @@ def to_move(action):
 
 
 def who(turn):
-    return 1 if turn == shogi.WHITE else -1
+    return -1 if turn == shogi.WHITE else 1
 
 
 def square_mirror(square):
@@ -82,6 +85,9 @@ def mirror_board(board):
     return new_board
 
 
+def copy_board(board):
+    return copy.deepcopy(board)
+
 class ShogiGame(Game):
     def __init__(self, n=9):
         self.n = n
@@ -95,6 +101,9 @@ class ShogiGame(Game):
         # (n, n, pieces) tuple
         return self.n, self.n, TOTAL_PIECES
 
+    def toArray(self, board):
+        return to_np(board)
+
     def getActionSize(self):
         # We assume every piece can be moved
         # return len(board.legal_moves) ?
@@ -106,15 +115,14 @@ class ShogiGame(Game):
         # action must be a valid move
         assert (who(board.turn) == player)
         move = to_move(action)
-        if board.turn == shogi.BLACK:
+        if board.turn == shogi.WHITE:
             # Assume that the move comes from the canonical board
             move = mirror_move(move)
-        if move not in board:
-            # It can be a piece promotion, which would have an extra letter (+) in USI format
-            move = shogi.Move.from_usi(move.usi() + '+')
-            if move not in board.legal_moves:
-                assert False, "%s not in %s" % (str(move), str(list(board.legal_moves)))
-        board = board.copy()
+        piece = board.piece_at(move.from_square)
+        if piece and not piece.is_promoted():
+            # To simplify, if we can promote, it's almost always good to do so
+            move.promotion = shogi.can_promote(move.to_square, piece.piece_type, piece.color)
+        board = copy_board(board)
         board.push(move)
         return board, who(board.turn)
 
@@ -122,13 +130,14 @@ class ShogiGame(Game):
         # return a fixed size binary vector
         assert (who(board.turn) == player)
         acts = [0] * self.getActionSize()
-        for move in board.get_legal_moves():
-            acts[from_move(move)] = 1
+        for move in board.legal_moves:
+            if move.from_square is not None:
+                acts[from_move(move)] = 1
         return np.array(acts)
 
     def getGameEnded(self, board, player):
         # return 0 if not ended, 1 if player 1 won, -1 if player 1 lost
-        if not board.is_game_over():
+        if board.is_game_over():
             if board.is_stalemate() or board.is_fourfold_repetition():
                 # draw, return very little value
                 return 1e-4
@@ -140,7 +149,7 @@ class ShogiGame(Game):
     def getCanonicalForm(self, board, player):
         # return state if player==1, else return -state if player==-1
         assert (who(board.turn) == player)
-        if board.turn == shogi.WHITE:
+        if board.turn == shogi.BLACK:
             return board
         else:
             return mirror_board(board)
